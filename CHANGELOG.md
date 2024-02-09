@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/LinLin00000000/learnertracker/compare/v1.0.0...v1.0.1) (2024-02-09)
+
+
+### Bug Fixes
+
+* ci ([28217c2](https://github.com/LinLin00000000/learnertracker/commit/28217c22565cb00eaa2d6c1409180e6484bf6f7b))
+
 ## 1.0.0 (2024-02-09)
 
 
