@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": "src",
+    "rootDir": "packages/core/src",
     "outDir": "lib",
     "target": "es2022",
     "module": "commonjs",
@@ -18,6 +18,6 @@
     ]
   },
   "include": [
-    "src"
+    "packages/core/src"
   ]
 }

@@ -5,9 +5,11 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
-    "lib",
-    "dist"
+    "lib"
   ],
+  "scripts": {
+    "build": "yakumo build"
+  },
   "author": "Lin <i@linlin.me>",
   "license": "MIT",
   "keywords": [
@@ -17,5 +19,9 @@
   ],
   "peerDependencies": {
     "koishi": "^4.16.7"
+  },
+  "devDependencies": {
+    "yakumo": "^0.3.13",
+    "yakumo-tsc": "^0.3.12"
   }
 }
