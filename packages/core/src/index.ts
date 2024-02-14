@@ -7,10 +7,12 @@ export const usage = '跟踪管理学习群各个用户的目标、计划，并�
 export interface Config {
   apiHost: string;
   apiKey: string;
+  model: string;
 }
 export const Config: Schema<Config> = Schema.object({
   apiHost: Schema.string().default("https://api.openai.com"),
   apiKey: Schema.string().required(),
+  model: Schema.string().default("gpt-3.5-turbo"),
 });
 
 declare module "koishi" {
@@ -138,7 +140,7 @@ export function apply(ctx: Context, config: Config) {
             { role: "user", content },
             { role: "system", content: system },
           ],
-          model: "gpt-4-turbo-preview",
+          model: config.model,
         }),
       })
     ).json();
