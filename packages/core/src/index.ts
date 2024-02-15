@@ -1,23 +1,24 @@
-import { Context, Schema } from "koishi";
+import { Context, Logger, Schema } from "koishi";
 
 export const name = "learnertracker";
 export const inject = ["database"];
-export const usage = '跟踪管理学习群各个用户的目标、计划，并就打卡内容对接 chatgpt api 进行总结和鼓励'
+export const usage =
+  "跟踪管理学习群各个用户的目标、计划，并就打卡内容对接 chatgpt api 进行总结和鼓励";
 
-export interface Config {
-  apiHost: string;
-  apiKey: string;
-  model: string;
-}
-export const Config: Schema<Config> = Schema.object({
+export const Config = Schema.object({
   apiHost: Schema.string().default("https://api.openai.com"),
   apiKey: Schema.string().required(),
   model: Schema.string().default("gpt-3.5-turbo"),
 });
 
+type Config = Schemastery.TypeT<typeof Config>;
+const logger = new Logger(name);
+
+const DBTableName = "learner";
+
 declare module "koishi" {
   interface Tables {
-    learner: Learner;
+    [DBTableName]: Learner;
   }
 }
 
@@ -28,14 +29,15 @@ export interface Learner {
   longTermGoal: string;
   longTermGoalSetTime: Date;
   style: string;
-  lastCheckinContent: string | null;
-  lastCheckinTime: Date | null;
+  lastCheckinContent: string;
+  lastCheckinTime: Date;
   learningPoints: number;
   language: string;
+  isSuggestionEnabled: boolean;
 }
 
 export function apply(ctx: Context, config: Config) {
-  ctx.model.extend("learner", {
+  ctx.model.extend(DBTableName, {
     id: "string",
     shortTermGoal: "text",
     shortTermGoalSetTime: "timestamp",
@@ -46,91 +48,215 @@ export function apply(ctx: Context, config: Config) {
     lastCheckinTime: "timestamp",
     learningPoints: "integer",
     language: "string",
+    isSuggestionEnabled: "boolean",
   });
 
-  // ctx.on("message", async (session) => {
-  //   session.send(JSON.stringify(session));
-  //   return;
-  // });
+  const defaultSuggestionEnabled = false;
 
-  const settings = ["语言风格", "语言"];
-  const setRegexPattern = `\\s*(${settings.join("|")})\\s+(.*)`;
+  const settings = [
+    "语言风格",
+    "语言",
+    "短期目标",
+    "长期目标",
+    "启用建议",
+    "禁用建议",
+  ];
+  const setRegexPattern = `\\s*(${settings.join("|")})(?:\\s+(.*))?`;
   const setRegex = new RegExp(setRegexPattern, "s");
   ctx
-    .command("set <content:text>")
+    .command(commandName("set <content:text>"))
     .action(async ({ session }, content) => {
       const match = content?.match(setRegex);
       if (match) {
+        session.send(JSON.stringify(match));
+        const setContent = match[2]?.trim();
         switch (match[1]) {
-          case "语言风格":
-            const style = match[2].trim();
-            if (style.length === 0) {
-              return `风格不能为空，请重新设置`;
-            } else {
-              await ctx.database.upsert("learner", [
-                { id: session.userId, style },
-              ]);
-              return `设置成功，当前你的语言风格为：${style}`;
-            }
           case "语言":
-            const language = match[2].trim();
-            if (language.length === 0) {
-              return `语言不能为空，请重新设置`;
+            if (!setContent) {
+              return `设置失败，请指定语言`;
             } else {
-              await ctx.database.upsert("learner", [
-                { id: session.userId, language },
+              await ctx.database.upsert(DBTableName, [
+                { id: session.userId, language: setContent },
               ]);
-              return `设置成功，当前你的语言为：${language}`;
+              return `设置成功，当前你的语言为：${setContent}`;
             }
-            otherwise: return JSON.stringify({
-              match,
-              time: new Date(session.timestamp),
-            });
+          case "语言风格":
+            if (!setContent) {
+              return `设置失败，请指定语言风格`;
+            } else {
+              await ctx.database.upsert(DBTableName, [
+                { id: session.userId, style: setContent },
+              ]);
+              return `设置成功，当前你的语言风格为：${setContent}`;
+            }
+          case "短期目标":
+            if (!setContent) {
+              return `设置失败，请指定短期目标`;
+            } else {
+              await ctx.database.upsert(DBTableName, [
+                {
+                  id: session.userId,
+                  shortTermGoal: setContent,
+                  shortTermGoalSetTime: new Date(session.timestamp),
+                },
+              ]);
+              return `设置成功，当前你的短期目标为：${setContent}`;
+            }
+          case "长期目标":
+            if (!setContent) {
+              return `设置失败，请指定长期目标`;
+            } else {
+              await ctx.database.upsert(DBTableName, [
+                {
+                  id: session.userId,
+                  longTermGoal: setContent,
+                  longTermGoalSetTime: new Date(session.timestamp),
+                },
+              ]);
+              return `设置成功，当前你的长期目标为：${setContent}`;
+            }
+          case "启用建议":
+            await ctx.database.upsert(DBTableName, [
+              { id: session.userId, isSuggestionEnabled: true },
+            ]);
+            return `设置成功，已启用建议`;
+          case "禁用建议":
+            await ctx.database.upsert(DBTableName, [
+              { id: session.userId, isSuggestionEnabled: false },
+            ]);
+            return `设置成功，已禁用建议`;
+          default:
+            return `设置失败，未知选项：${match[1]}`;
         }
       } else {
-        return `设置失败，请使用以下选项：${settings.join(
-          "、"
-        )}，并以空白间隔附上内容`;
+        return `请使用以下选项(以空白间隔开)：
+${settings.map((s) => "\t" + s).join("\n")}
+并以空白间隔附上内容`;
       }
-    })
-    .alias("设置");
+    });
 
-  ctx.command("get_all_settings").action(async ({ session }) => {
-    const result = (await ctx.database.get("learner", session.userId))[0];
-    return JSON.stringify(result);
+  ctx
+    .command(commandName("reset <content:text>"))
+    .action(async ({ session }, content) => {
+      const match = content?.match(setRegex);
+      if (match) {
+        session.send(JSON.stringify(match));
+        switch (match[1]) {
+          case "语言":
+            await ctx.database.upsert(DBTableName, [
+              { id: session.userId, language: null },
+            ]);
+            return `重置成功，当前你的语言已重置`;
+
+          case "语言风格":
+            await ctx.database.upsert(DBTableName, [
+              { id: session.userId, style: null },
+            ]);
+            return `重置成功，当前你的语言风格已重置`;
+          case "短期目标":
+            await ctx.database.upsert(DBTableName, [
+              {
+                id: session.userId,
+                shortTermGoal: null,
+                shortTermGoalSetTime: null,
+              },
+            ]);
+            return `重置成功，当前你的短期目标已重置`;
+          case "长期目标":
+            await ctx.database.upsert(DBTableName, [
+              {
+                id: session.userId,
+                longTermGoal: null,
+                longTermGoalSetTime: null,
+              },
+            ]);
+            return `重置成功，当前你的长期目标已重置`;
+          case "启用建议":
+            await ctx.database.upsert(DBTableName, [
+              {
+                id: session.userId,
+                isSuggestionEnabled: defaultSuggestionEnabled,
+              },
+            ]);
+            return `重置成功，默认为禁用建议`;
+          case "禁用建议":
+            await ctx.database.upsert(DBTableName, [
+              {
+                id: session.userId,
+                isSuggestionEnabled: defaultSuggestionEnabled,
+              },
+            ]);
+            return `重置成功，默认为禁用建议`;
+          default:
+            return `重置失败，未知选项：${match[1]}`;
+        }
+      } else {
+        return `请使用以下选项(以空白间隔开)：
+${settings.map((s) => "\t" + s).join("\n")}`;
+      }
+    });
+
+  ctx.command(commandName("get_all_settings")).action(async ({ session }) => {
+    const result = (await ctx.database.get(DBTableName, session.userId))[0];
+    return JSON.stringify(result, null, 2);
   });
 
   ctx
-    .command("checkin <content:text>", "打卡")
+    .command(commandName("checkout <content:text>"))
     .option("style", "[val:string]")
     .action(async ({ session, options }, content) => {
+      logger.debug(JSON.stringify({ options, content }, null, 2));
+
       if (!content || content.trim().length === 0) {
         const msg = "虽然沉默是金，但你的故事才是我们的宝藏！写点什么吧。";
         return msg;
       }
 
-      const settings = (await ctx.database.get("learner", session.userId))[0];
-      const finalStyle = options.style?.trim() || settings?.style || "";
-      const finalLanuage = settings?.language || "";
+      const settings = (await ctx.database.get(DBTableName, session.userId))[0];
 
-      const res = await gpt(
-        content,
-        `${finalStyle.length !== 0 ? `使用${finalStyle}的风格生成回答。` : ""}
-        请基于用户提供的活动描述，生成一段总结性和鼓励性质的文字，并给出后续的建议和指导。
-        ${finalLanuage.length !== 0 ? `使用${finalLanuage}进行回答。` : ""}
-        `
+      const prompts = [];
+      if (settings?.longTermGoal) {
+        prompts.push(
+          `用户于 ${settings.longTermGoalSetTime.toString()} 设置了长期目标:\n${
+            settings.longTermGoal
+          }\n`
+        );
+      }
+      if (settings?.shortTermGoal) {
+        prompts.push(
+          `用户于 ${settings.shortTermGoalSetTime.toString()} 设置了短期目标:\n${
+            settings.shortTermGoal
+          }\n`
+        );
+      }
+      if (settings?.longTermGoal || settings?.shortTermGoal) {
+        prompts.push(`现在的时间是 ${new Date(session.timestamp)}`);
+      }
+      prompts.push(
+        `请基于以上信息和用户提供的活动描述，生成一段总结性和鼓励性质的文字${
+          settings?.isSuggestionEnabled ? "，并给出后续的建议和指导" : ""
+        }。`
       );
-      return res;
-    })
-    .alias("打卡");
+      const finalStyle = options.style?.trim() || settings?.style;
+      if (finalStyle) {
+        prompts.push(`使用 **${finalStyle}** 的风格生成回答。`);
+      }
+      if (settings?.language) {
+        prompts.push(`使用 **${settings.language}** 生成回答。`);
+      }
+      logger.debug(prompts.join("\n"));
 
-  const url = `${config.apiHost}/v1/chat/completions`;
-  const headers = {
-    Authorization: "Bearer " + config.apiKey,
-    "Content-Type": "application/json",
-  };
+      const res = await gpt(content, prompts.join("\n"));
+      return res;
+    });
 
   async function gpt(content: string, system = "") {
+    const url = `${config.apiHost}/v1/chat/completions`;
+    const headers = {
+      Authorization: "Bearer " + config.apiKey,
+      "Content-Type": "application/json",
+    };
+
     const res = await (
       await fetch(url, {
         method: "POST",
@@ -146,4 +272,8 @@ export function apply(ctx: Context, config: Config) {
     ).json();
     return res.choices[0].message.content;
   }
+}
+
+function commandName(command: string) {
+  return `${name}.${command}`;
 }
