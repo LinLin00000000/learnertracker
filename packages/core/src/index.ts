@@ -257,20 +257,41 @@ ${settings.map((s) => "\t" + s).join("\n")}`;
       "Content-Type": "application/json",
     };
 
-    const res = await (
-      await fetch(url, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          messages: [
-            { role: "user", content },
-            { role: "system", content: system },
-          ],
-          model: config.model,
-        }),
-      })
-    ).json();
-    return res.choices[0].message.content;
+    const MAX_RETRIES = 3; // 最大重试次数
+    let retries = 0; // 当前重试计数
+
+    while (retries < MAX_RETRIES) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            messages: [
+              { role: "user", content },
+              { role: "system", content: system },
+            ],
+            model: config.model,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const res = await response.json();
+        return res.choices[0].message.content;
+      } catch (error) {
+        logger.warn(`Attempt ${retries + 1} failed: ${error.message}`);
+        retries += 1;
+
+        if (retries >= MAX_RETRIES) {
+          throw new Error("Max retries reached. Aborting.");
+        }
+
+        // 简单的重试延迟逻辑，例如等待 1 秒
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
   }
 }
 
