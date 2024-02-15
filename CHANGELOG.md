@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.0](https://github.com/LinLin00000000/learnertracker/compare/v1.0.1...v1.1.0) (2024-02-15)
+
+
+### Features
+
+* gpt 鼓励时将结合用户的学习目标以及相关时间 ([85720ea](https://github.com/LinLin00000000/learnertracker/commit/85720eaba51eb30081dddd075e1ca9053921cd91))
+* 增加 model 配置项 ([f20943c](https://github.com/LinLin00000000/learnertracker/commit/f20943c069a4e0094f615ac0759a25f0cbd7bc78))
+* 增加了设置短期目标、长期目标的功能 ([85720ea](https://github.com/LinLin00000000/learnertracker/commit/85720eaba51eb30081dddd075e1ca9053921cd91))
+* 增加启用/禁用建议的功能 ([85720ea](https://github.com/LinLin00000000/learnertracker/commit/85720eaba51eb30081dddd075e1ca9053921cd91))
+* 调用 gpt api 时增加简单的重试逻辑 ([9babce4](https://github.com/LinLin00000000/learnertracker/commit/9babce44052b6c98a68ab64ce06f8e3a343b07dd))
+
 ## [1.0.1](https://github.com/LinLin00000000/learnertracker/compare/v1.0.0...v1.0.1) (2024-02-09)
 
 
