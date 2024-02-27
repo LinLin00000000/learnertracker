@@ -2,7 +2,7 @@
   "name": "koishi-plugin-learnertracker",
   "description": "跟踪管理学习群各个用户的目标、计划，并就打卡内容对接 chatgpt api 进行总结和鼓励",
   "homepage": "https://github.com/LinLin00000000/learnertracker",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [

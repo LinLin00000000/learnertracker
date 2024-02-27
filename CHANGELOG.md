@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/LinLin00000000/learnertracker/compare/v1.1.0...v1.2.0) (2024-02-27)
+
+
+### Features
+
+* 将生成的回答格式美化 ([294bb63](https://github.com/LinLin00000000/learnertracker/commit/294bb63dd63d6125ee030034010c9da1f8966dc1))
+
 ## [1.1.0](https://github.com/LinLin00000000/learnertracker/compare/v1.0.1...v1.1.0) (2024-02-15)
 
 
