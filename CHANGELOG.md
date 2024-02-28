@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.0](https://github.com/LinLin00000000/learnertracker/compare/v1.2.0...v2.0.0) (2024-02-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* 删除在打卡时指定 style 的功能，以精简代码
+* 支持更通用的 api，需要写完整url
+
+### Features
+
+* 支持更通用的 api，需要写完整url ([c392030](https://github.com/LinLin00000000/learnertracker/commit/c39203059ab9184848c530b84ff2eb2d9ef86554))
+
+
+### Miscellaneous Chores
+
+* 删除在打卡时指定 style 的功能，以精简代码 ([758979a](https://github.com/LinLin00000000/learnertracker/commit/758979abddb6151e5e93e45221e735ac22a49484))
+
 ## [1.2.0](https://github.com/LinLin00000000/learnertracker/compare/v1.1.0...v1.2.0) (2024-02-27)
 
 
