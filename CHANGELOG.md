@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/LinLin00000000/learnertracker/compare/v2.0.0...v2.0.1) (2024-02-28)
+
+
+### Bug Fixes
+
+* 修复不该出现的 debug 信息 ([91bf1ff](https://github.com/LinLin00000000/learnertracker/commit/91bf1ff57ddc1244d671fb2a694548b30d3c0d92))
+
 ## [2.0.0](https://github.com/LinLin00000000/learnertracker/compare/v1.2.0...v2.0.0) (2024-02-28)
 
 
