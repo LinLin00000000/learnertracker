@@ -68,7 +68,7 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({ session }, content) => {
       const match = content?.match(setRegex);
       if (match) {
-        session.send(JSON.stringify(match));
+        logger.debug(JSON.stringify(match));
         const setContent = match[2]?.trim();
         switch (match[1]) {
           case "语言":
