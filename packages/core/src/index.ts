@@ -6,7 +6,7 @@ export const usage =
   "跟踪管理学习群各个用户的目标、计划，并就打卡内容对接 chatgpt api 进行总结和鼓励";
 
 export const Config = Schema.object({
-  apiHost: Schema.string().default("https://api.openai.com"),
+  apiHost: Schema.string().default("https://api.openai.com/v1/chat/completions"),
   apiKey: Schema.string().required(),
   model: Schema.string().default("gpt-3.5-turbo"),
 });
@@ -252,7 +252,6 @@ ${settings.map((s) => "\t" + s).join("\n")}`;
     });
 
   async function gpt(content: string, system = "") {
-    const url = `${config.apiHost}/v1/chat/completions`;
     const headers = {
       Authorization: "Bearer " + config.apiKey,
       "Content-Type": "application/json",
@@ -263,7 +262,7 @@ ${settings.map((s) => "\t" + s).join("\n")}`;
 
     while (retries < MAX_RETRIES) {
       try {
-        const response = await fetch(url, {
+        const response = await fetch(config.apiHost, {
           method: "POST",
           headers,
           body: JSON.stringify({
