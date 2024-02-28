@@ -203,7 +203,6 @@ ${settings.map((s) => "\t" + s).join("\n")}`;
 
   ctx
     .command(commandName("checkout <content:text>"))
-    .option("style", "[val:string]")
     .action(async ({ session, options }, content) => {
       logger.debug(JSON.stringify({ options, content }, null, 2));
 
@@ -238,9 +237,8 @@ ${settings.map((s) => "\t" + s).join("\n")}`;
         }。`
       );
       prompts.push('请使用纯文本生成回答，不要使用 markdown 格式。请注意排版。')
-      const finalStyle = options.style?.trim() || settings?.style;
-      if (finalStyle) {
-        prompts.push(`使用 **${finalStyle}** 的风格生成回答。`);
+      if (settings?.style) {
+        prompts.push(`使用 **${settings.style}** 的风格生成回答。`);
       }
       if (settings?.language) {
         prompts.push(`使用 **${settings.language}** 生成回答。`);
